@@ -1,17 +1,13 @@
 from pathlib import Path
 import pandas as pd
 
-# ============================================================
 # CONFIGURAÇÕES
-# ============================================================
 
 ARQUIVO = Path("../data/processed/sih_sp_2024_amostra.parquet")
 
 df = pd.read_parquet(ARQUIVO)
 
-# ============================================================
 # INFORMAÇÕES GERAIS
-# ============================================================
 
 print("=" * 70)
 print("ANÁLISE EXPLORATÓRIA - SIH/SUS")
@@ -20,9 +16,7 @@ print("=" * 70)
 print(f"\nInternações: {len(df):,}")
 print(f"Variáveis: {len(df.columns)}")
 
-# ============================================================
 # VARIÁVEL RESPOSTA
-# ============================================================
 
 print("\n" + "=" * 70)
 print("ÓBITO")
@@ -43,9 +37,7 @@ print(
     f"{df['MORTE'].mean() * 100:.2f}%"
 )
 
-# ============================================================
 # ESTATÍSTICAS DESCRITIVAS
-# ============================================================
 
 print("\n" + "=" * 70)
 print("IDADE")
@@ -59,9 +51,7 @@ print("=" * 70)
 
 print(df["DIAS_PERM"].describe())
 
-# ============================================================
 # DISTRIBUIÇÃO DAS VARIÁVEIS CATEGÓRICAS
-# ============================================================
 
 for coluna in ["SEXO", "RACA_COR", "COMPLEX"]:
     print("\n" + "=" * 70)
@@ -69,9 +59,7 @@ for coluna in ["SEXO", "RACA_COR", "COMPLEX"]:
     print("=" * 70)
     print(df[coluna].value_counts())
 
-# ============================================================
 # UTILIZAÇÃO DE UTI
-# ============================================================
 
 print("\n" + "=" * 70)
 print("UTILIZAÇÃO DE UTI")
@@ -94,9 +82,7 @@ taxa_uti["mean"] *= 100
 
 print(taxa_uti)
 
-# ============================================================
 # FAIXAS ETÁRIAS
-# ============================================================
 
 df["FAIXA_IDADE"] = pd.cut(
     df["IDADE"],
@@ -124,9 +110,7 @@ idade_morte["mean"] *= 100
 
 print(idade_morte)
 
-# ============================================================
 # ÓBITO POR SEXO
-# ============================================================
 
 print("\n" + "=" * 70)
 print("TAXA DE ÓBITO POR SEXO")
@@ -141,9 +125,7 @@ sexo_morte["mean"] *= 100
 
 print(sexo_morte)
 
-# ============================================================
 # ÓBITO POR COMPLEXIDADE
-# ============================================================
 
 print("\n" + "=" * 70)
 print("TAXA DE ÓBITO POR COMPLEXIDADE")
@@ -158,9 +140,7 @@ complex_morte["mean"] *= 100
 
 print(complex_morte)
 
-# ============================================================
 # DIAGNÓSTICOS MAIS FREQUENTES
-# ============================================================
 
 print("\n" + "=" * 70)
 print("20 DIAGNÓSTICOS PRINCIPAIS MAIS FREQUENTES")
@@ -172,9 +152,7 @@ print(
     .head(20)
 )
 
-# ============================================================
 # TAXA DE ÓBITO POR DIAGNÓSTICO
-# ============================================================
 
 diag_morte = (
     df.groupby("DIAG_PRINC")["MORTE"]
@@ -194,9 +172,7 @@ print("=" * 70)
 
 print(diag_morte.head(20))
 
-# ============================================================
 # IDADE E PERMANÊNCIA SEGUNDO ÓBITO
-# ============================================================
 
 print("\n" + "=" * 70)
 print("IDADE SEGUNDO ÓBITO")
@@ -216,9 +192,7 @@ print(
     .describe()[["count", "mean", "50%", "std", "min", "max"]]
 )
 
-# ============================================================
 # VALIDAÇÕES
-# ============================================================
 
 print("\n" + "=" * 70)
 print("VERIFICAÇÕES")
