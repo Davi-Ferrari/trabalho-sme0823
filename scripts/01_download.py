@@ -1,15 +1,9 @@
-# ============================================================
-# SIH/SUS - SÃO PAULO - 2024
-# Construção da base amostral
-# ============================================================
+
 
 import os
 import pandas as pd
 import pyarrow.parquet as pq
 
-# ------------------------------------------------------------
-# Configurações
-# ------------------------------------------------------------
 
 N_POR_MES = 50_000
 RANDOM_STATE = 42
@@ -18,9 +12,6 @@ PASTA = "/root/pysus/downloads/ducklake/sih"
 
 dfs = []
 
-# ------------------------------------------------------------
-# Ler os 12 meses
-# ------------------------------------------------------------
 
 for mes in range(1, 13):
 
@@ -39,9 +30,7 @@ for mes in range(1, 13):
     print(f"Registros disponíveis: {len(df_mes):,}")
     print(f"Variáveis: {len(df_mes.columns)}")
 
-    # --------------------------------------------------------
     # Amostragem
-    # --------------------------------------------------------
 
     if len(df_mes) > N_POR_MES:
         df_mes = df_mes.sample(
@@ -52,10 +41,6 @@ for mes in range(1, 13):
     print(f"Registros selecionados: {len(df_mes):,}")
 
     dfs.append(df_mes)
-
-# ------------------------------------------------------------
-# Consolidar
-# ------------------------------------------------------------
 
 df = pd.concat(
     dfs,
@@ -69,26 +54,20 @@ print("=" * 60)
 print(f"Linhas:   {len(df):,}")
 print(f"Colunas:  {len(df.columns)}")
 
-# ------------------------------------------------------------
 # Visualização inicial
-# ------------------------------------------------------------
 
 print("\nPrimeiras linhas:")
 
 display(df.head())
 
-# ------------------------------------------------------------
 # Lista de todas as variáveis
-# ------------------------------------------------------------
 
 print("\nTodas as variáveis:")
 
 for i, coluna in enumerate(df.columns, 1):
     print(f"{i:3d} - {coluna}")
 
-# ------------------------------------------------------------
 # MORTE
-# ------------------------------------------------------------
 
 print("\n" + "=" * 60)
 print("MORTE")
@@ -109,9 +88,7 @@ display(
     )
 )
 
-# ------------------------------------------------------------
 # Salvar
-# ------------------------------------------------------------
 
 os.makedirs(
     "/content/sih_2024",
