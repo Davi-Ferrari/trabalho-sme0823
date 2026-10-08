@@ -1,106 +1,134 @@
 
-
 import os
+import gc
 import pandas as pd
-import pyarrow.parquet as pq
+import pysus
 
+
+PASTA = "/root/pysus/downloads/ducklake/sih"
 
 N_POR_MES = 50_000
 RANDOM_STATE = 42
 
-PASTA = "/root/pysus/downloads/ducklake/sih"
+VARIAVEIS = [
+    "MORTE",
+    "IDADE",
+    "SEXO",
+    "RACA_COR",
+    "DIAS_PERM",
+    "COMPLEX",
+    "UTI_MES_IN",
+    "UTI_MES_AN",
+    "UTI_MES_AL",
+    "UTI_MES_TO",
+    "DIAG_PRINC",
+    "MUNIC_RES"
+]
 
-dfs = []
+# Criar pasta caso ainda não exista
+os.makedirs(PASTA, exist_ok=True)
 
+amostras = []
 
 for mes in range(1, 13):
 
-    nome = f"RDSP24{mes:02d}.parquet"
-    caminho = os.path.join(PASTA, nome)
+    arquivo_rd = f"RDSP24{mes:02d}.parquet"
+    caminho_rd = os.path.join(PASTA, arquivo_rd)
 
-    print(f"\nProcessando {nome}...")
+    print("\n" + "=" * 65)
+    print(f"MÊS {mes:02d}/2024")
+    print("=" * 65)
 
-    if not os.path.exists(caminho):
-        print("Arquivo não encontrado.")
-        continue
 
-    # Ler todas as colunas
-    df_mes = pd.read_parquet(caminho)
+    if not os.path.exists(caminho_rd):
+
+        print("Baixando dados do mês...")
+
+        arquivos = pysus.sih(
+            state="SP",
+            year=2024,
+            month=mes
+        )
+
+        # Procurar especificamente o arquivo RD de SP
+        candidatos = [
+            arq for arq in arquivos
+            if os.path.basename(arq) == arquivo_rd
+        ]
+
+        if len(candidatos) == 0:
+            raise FileNotFoundError(
+                f"\nNão foi encontrado o arquivo esperado:\n"
+                f"{arquivo_rd}\n\n"
+                f"Arquivos retornados pelo PySUS:\n{arquivos}"
+            )
+
+        caminho_rd = candidatos[0]
+
+    else:
+        print("Arquivo já encontrado no cache.")
+
+  
+    df_mes = pd.read_parquet(
+        caminho_rd,
+        columns=VARIAVEIS
+    )
 
     print(f"Registros disponíveis: {len(df_mes):,}")
-    print(f"Variáveis: {len(df_mes.columns)}")
 
-    # Amostragem
+    n = min(N_POR_MES, len(df_mes))
 
-    if len(df_mes) > N_POR_MES:
-        df_mes = df_mes.sample(
-            n=N_POR_MES,
-            random_state=RANDOM_STATE
-        )
+    df_mes = df_mes.sample(
+        n=n,
+        random_state=RANDOM_STATE
+    ).reset_index(drop=True)
 
     print(f"Registros selecionados: {len(df_mes):,}")
 
-    dfs.append(df_mes)
+    
+    amostras.append(df_mes)
+
+    # Liberar objetos temporários
+    del df_mes
+
+    gc.collect()
+
+    print("Memória temporária liberada.")
+
+
+print("\n" + "=" * 65)
+print("CONCATENANDO AS AMOSTRAS")
+print("=" * 65)
 
 df = pd.concat(
-    dfs,
+    amostras,
     ignore_index=True
 )
 
-print("\n" + "=" * 60)
-print("BASE CONSOLIDADA")
-print("=" * 60)
+# Liberar lista intermediária
+del amostras
+gc.collect()
 
-print(f"Linhas:   {len(df):,}")
-print(f"Colunas:  {len(df.columns)}")
 
-# Visualização inicial
+print("\n" + "=" * 65)
+print("BASE FINAL")
+print("=" * 65)
 
-print("\nPrimeiras linhas:")
+print(f"Dimensão: {df.shape}")
+print(f"Registros: {len(df):,}")
+print(f"Variáveis: {len(df.columns)}")
 
-display(df.head())
+print("\nColunas:")
+for coluna in df.columns:
+    print(f"  - {coluna}")
 
-# Lista de todas as variáveis
+print("\nDistribuição da variável resposta:")
+print(df["MORTE"].value_counts(dropna=False))
 
-print("\nTodas as variáveis:")
-
-for i, coluna in enumerate(df.columns, 1):
-    print(f"{i:3d} - {coluna}")
-
-# MORTE
-
-print("\n" + "=" * 60)
-print("MORTE")
-print("=" * 60)
-
-display(
+print("\nPercentuais:")
+print(
     df["MORTE"]
-    .value_counts(dropna=False)
+    .value_counts(normalize=True, dropna=False)
+    .mul(100)
+    .round(2)
 )
-
-print("\nProporções:")
-
-display(
-    df["MORTE"]
-    .value_counts(
-        normalize=True,
-        dropna=False
-    )
-)
-
-# Salvar
-
-os.makedirs(
-    "/content/sih_2024",
-    exist_ok=True
-)
-
-saida = "/content/sih_2024/sih_sp_2024_amostra.parquet"
-
-df.to_parquet(
-    saida,
-    index=False
-)
-
-print("\nBase salva em:")
-print(saida)
